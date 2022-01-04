@@ -4,6 +4,7 @@ const sharp = require('sharp')
 const User = require('../models/user')
 const auth = require('../middleware/auth')
 const multer = require('multer')
+const {sendWelcomeEmail, sendCancelEmail} = require('../emails/account')
 
 // User REST
 // Fetch all users (authenticated)
@@ -18,6 +19,7 @@ router.post('/users', async (req, res) => {
 
     try {
         await newUser.save()
+        sendWelcomeEmail(newUser.email, newUser.name)
         const token = await newUser.generateAuthToken()
         res.status(201).send({newUser, token})
     } catch (error) {
@@ -85,6 +87,7 @@ router.patch('/users/me', auth, async (req, res) => {
 router.delete('/users/me', auth, async (req, res) => {
     try {
         await req.user.remove()
+        sendCancelEmail(req.user.email, req.user.name)
         res.send(req.user)
     } catch (error){
         res.status(500).send(error)
